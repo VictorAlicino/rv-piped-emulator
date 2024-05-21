@@ -102,6 +102,8 @@ class RegisterFile():
         logging.debug('[Register File] Writing at register --> x%s = %s',
                       write_register,
                       value)
+        if type(value) is not DataRegister:
+            value = DataRegister(value)
         if write_register == 0:
             raise ValueError('Cannot write to x0')
         getattr(self, f'x{write_register}').write(value.data)

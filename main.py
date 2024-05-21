@@ -47,7 +47,7 @@ def _main() -> int:
         pass
     end_time = time.time()
     execution_time = end_time - start_time
-    logging.debug(f'Execution time: {execution_time/1000} s')
+    logging.debug(f'Execution time: %s s', execution_time/1000)
 
     return 0
 
