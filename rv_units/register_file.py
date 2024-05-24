@@ -108,7 +108,7 @@ class RegisterFile():
             raise ValueError('Cannot write to x0')
         getattr(self, f'x{write_register}').write(value.data)
 
-    def dump(self, see_bits: bool = False) -> None:
+    def dumps(self, see_bits: bool = False) -> None:
         """Print all the registers"""
         logging.debug('[Register File] Dumping all registers on STDIN')
         if see_bits:
@@ -122,3 +122,21 @@ class RegisterFile():
                 logging.debug('[Register File] x%s = %s',
                               i,
                               int(getattr(self, f"x{i}")))
+
+    def dump(self) -> str:
+        """Return all registers as a string"""
+        logging.debug('[Register File] Dumping Registers')
+        # Print the header
+        header = "       " + " ".join(f"{i:02X}" for i in range(16))
+        separator = "    " + "-" * (3 * 16 + 1) + " " + "-" * 16
+        print(header)
+        print(separator)
+
+        # Print the registers
+        for i in range(32):
+            if i % 16 == 0:
+                print(f"x{i:02X} |  ", end="")
+            print(f"{int(getattr(self, f'x{i}')):02X} ", end="")
+            if i % 16 == 15:
+                print("|", end="")
+                print()

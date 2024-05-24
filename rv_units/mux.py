@@ -2,75 +2,31 @@
 from rv_units.register_file import DataRegister
 
 class MUX1:
-    """This class represents a 1-bit Multiplexer"""
-    def __init__(self, _0 = 0, _1 = 0, select: int = 0):
+    """This class represents a Multiplexer"""
+    def __init__(self, _0 = 0, _1 = 0, select = False):
         self._input0: DataRegister | int = _0
         self._input1: DataRegister | int = _1
-        self._select: int = select
+        self._select: bool = select
 
-    def write(self, value: DataRegister, select: int) -> None:
+    def write(self, value: DataRegister, select: bool) -> None:
         """Write data to the multiplexer"""
-        match select:
-            case 1:
-                self._input1 = value
-            case _:
-                self._input0 = value
+        if select:
+            self._input1 = value
+        else:
+            self._input0 = value
 
     def read(self) -> DataRegister | int:
         """Read the selected input"""
-        match self._select:
-            case 1:
-                return self._input1
-            case _:
-                return self._input0
+        if self._select:
+            return self._input1
+        return self._input0
 
-    def set_select(self, select: int) -> None:
+    def set_select(self, select: bool) -> None:
         """Set the select signal"""
-        if select < 0 or select > 1:
-            raise ValueError('Invalid select signal')
         self._select = select
 
     def __str__(self):
-        return (f'Input0: {self._input0} |'
-                f'Input1: {self._input1} |'
-                f' Select: {self._select} = {self.read()}')
+        return f'Input0: {self._input0} | Input1: {self._input1} | Select: {self._select}'
 
-class MUX2:
-    """This class represents a 2-bit Multiplexer"""
-    def __init__(self, _0 = 0, _1 = 0, _2 = 0, select:int = 0):
-        self._input0: DataRegister | int = _0
-        self._input1: DataRegister | int = _1
-        self._input2: DataRegister | int = _2
-        self._select: int = select
-
-    def write(self, value: DataRegister, select: int) -> None:
-        """Write data to the multiplexer"""
-        match select:
-            case 1:
-                self._input1 = value
-            case 2:
-                self._input2 = value
-            case _:
-                self._input0 = value
-
-    def read(self) -> DataRegister | int:
-        """Read the selected input"""
-        match self._select:
-            case 1:
-                return self._input1
-            case 2:
-                return self._input2
-            case _:
-                return self._input0
-
-    def set_select(self, select: int) -> None:
-        """Set the select signal"""
-        if select < 0 or select > 2:
-            raise ValueError('Invalid select signal')
-        self._select = select
-
-    def __str__(self):
-        return (f'Input0: {self._input0} |'
-                f'Input1: {self._input1} |'
-                f'Input2: {self._input2} |'
-                f' Select: {self._select} = {self.read()}')
+    def __repr__(self):
+        return f'Input0: {self._input0} | Input1: {self._input1} | Select: {self._select}'

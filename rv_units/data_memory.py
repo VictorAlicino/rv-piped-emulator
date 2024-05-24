@@ -55,7 +55,7 @@ class DataMemory():
             ascii_values = "".join(chr(byte) if 32 <= byte < 127 else '.' for byte in chunk)
             print(f"{offset:04X} │ {hex_values:<47} │ {ascii_values}")
 
-        logging.debug('[Data Memory] Data: %s', data.hex())
+        #logging.debug('[Data Memory] Data: %s', data.hex())
 
     def seek(self, address) -> None:
         """Seek to a specific address"""

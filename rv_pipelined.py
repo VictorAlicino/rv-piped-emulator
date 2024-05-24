@@ -211,30 +211,44 @@ class RiscV:
 
         # Operations with the Register File
         # Writing the result to the destination register
-        if bus_mem_wb['control'].reg_write: # If the MEM/WB stage is writing to the register
-            logging.debug('[ID] Writing %s to register x%s',
-                          int(self._wb_mux.read()),
-                          bus_mem_wb['rd']) # Write the result to the destination register
-            self._registers.write_data(
-                bus_mem_wb['rd'],
-                self._wb_mux.read()
-            )
+        # if bus_mem_wb['control'].reg_write == 1: # If the MEM/WB stage is writing to the register
+        #     logging.debug('[ID] Writing %s to register x%s',
+        #                   int(self._wb_mux.read()),
+        #                   bus_mem_wb['rd']) # Write the result to the destination register
+        #     self._registers.write_data(
+        #         bus_mem_wb['rd'],
+        #         self._wb_mux.read()
+        #     )
 
-        # Reading the source registers
+        # Setting the source registers
         self._registers.select_register(read_register=rr_1, to_read_data=1)
         self._registers.select_register(read_register=rr_2, to_read_data=2)
-        logging.debug('[ID] Read Register 1: x%s | Read Register 2: x%s | Write Register: x%s',
+
+        read_data_1 = self._registers.read_data(1)
+        read_data_2 = self._registers.read_data(2)
+
+        logging.debug('[ID] Read Register x1: %s | Read Register x2: %s | Write Register: x%s',
                        rr_1, rr_2, rd)
 
         # Update the ID/EX bus
         new_bus_id_ex = {}
         new_bus_id_ex.update({'control': control_unit})
         new_bus_id_ex.update({'pc': pc})
-        new_bus_id_ex.update({'rr_1': self._registers.read_data(1)})
-        new_bus_id_ex.update({'rr_2': self._registers.read_data(2)})
+        new_bus_id_ex.update({'rr_1': read_data_1})
+        new_bus_id_ex.update({'rr_2': read_data_2})
         new_bus_id_ex.update({'imm': imm})
         new_bus_id_ex.update({'instruction': instruction})
         new_bus_id_ex.update({'rd': rd})
+        logging.debug('Register File dump below:')
+        logging.debug('')
+        self._registers.dump()
+        logging.debug('')
+        logging.debug('[ID] PC: %s | RR1: %s | RR2: %s | Immediate: %s | RD: %s',
+                      int(pc),
+                      int(self._registers.read_data(1)),
+                      int(self._registers.read_data(2)),
+                      int(imm),
+                      int(rd))
         return new_bus_id_ex
 
     def _execute(self, bus_id_ex: dict) -> dict:
@@ -253,6 +267,9 @@ class RiscV:
         rr_2: DataRegister = bus_id_ex['rr_2']
         rd: int = bus_id_ex['rd']
         instruction: str = bus_id_ex['instruction']
+
+        logging.debug('[EX] PC: %s | RR1: %s | RR2: %s | Immediate: %s | RD: %s',
+                      int(pc), int(rr_1), int(rr_2), int(imm), int(rd))
 
         logging.info('[EX] Instruction: %s', instruction)
 
@@ -298,6 +315,8 @@ class RiscV:
         new_bus_ex_mem.update({'rr_2': rr_2})
         new_bus_ex_mem.update({'rd': rd})
         new_bus_ex_mem.update({'instruction': instruction})
+        logging.debug('[EX] offset: %s | ZERO: %s | ALU Result: %s | RR2: %s | RD: %s',
+                      pc_offset, self._alu.zero(), self._alu.result(), rr_2, rd)
         return new_bus_ex_mem
 
     def _memory_access(self, bus_ex_mem: dict) -> dict:
@@ -317,6 +336,8 @@ class RiscV:
         rd: int = bus_ex_mem['rd']
         instruction: str = bus_ex_mem['instruction']
 
+        logging.debug('[MEM] offset: %s | ZERO: %s | ALU Result: %s | RR2: %s | RD: %s',
+                     int(offset), zero, int(alu_result), int(rr_2), rd)
         logging.info('[MEM] Instruction: %s', instruction)
 
         # Conditional Branch
@@ -353,7 +374,9 @@ class RiscV:
         new_bus_mem_wb.update({'rd': rd})
         new_bus_mem_wb.update({'instruction': instruction})
         logging.warning('[MEM] Data Memory dump below:')
+        logging.debug('')
         self._data_mem.dump()
+        logging.debug('')
         return new_bus_mem_wb
 
     def _write_back(self, bus_mem_wb) -> None:
@@ -371,6 +394,9 @@ class RiscV:
         rd: DataRegister = bus_mem_wb['rd']
         instruction: str = bus_mem_wb['instruction']
 
+        logging.debug('[WB] Data Memory read: %s | ALU Result: %s | RD: %s',
+                      int(dmem_read_data), alu_result, int(rd))
+
         logging.info('[WB] Instruction: %s', instruction)
 
         # Write Back
@@ -381,6 +407,13 @@ class RiscV:
                         int(control_unit.mem_to_reg),
                         self._wb_mux.read())
         self._wb_rd = DataRegister(rd)
+
+        # Write the result to the destination register
+        if control_unit.reg_write:
+            self._registers.write_data(int(self._wb_rd), self._wb_mux.read())
+            logging.debug('[WB] Writing %s to register x%s',
+                          int(self._wb_mux.read()),
+                          int(self._wb_rd))
         logging.debug('[WB] Write Back destination register: x%s', rd)
 
     def cycle(self) -> bool:
@@ -418,6 +451,10 @@ class RiscV:
             self._write_back(bus_mem_wb)
         except ValueError:
             logging.debug('[Emulator] Halting...')
+            logging.debug('[Emulator] Cycle %d finished\n', self._cycle_counter)
+            self._registers.dump()
+            print()
+            self._data_mem.dump()
             return False
 
         # Writing the next cycle bus values

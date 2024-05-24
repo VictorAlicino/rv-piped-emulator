@@ -14,15 +14,15 @@ def _main() -> int:
     root.withdraw()
     if len(sys.argv) > 1:
         if sys.argv[1] == '--debug':
-            logging.basicConfig(encoding='utf-8', level=logging.DEBUG,
-                                #format='[%(asctime)s|%(funcName)s @ '
-                                #  '%(filename)s:%(lineno)s] %(message)s',
-                                format='%(asctime)s | %(message)s',
-                                handlers=[
-                                    logging.FileHandler("debug.log"),
-                                    logging.StreamHandler()
-                                ]
-                                )
+            logging.basicConfig(
+                encoding='utf-8',
+                level=logging.DEBUG,
+                format='%(asctime)s | %(message)s',
+                handlers=[
+                    logging.FileHandler("debug.log", mode='w'),  # Modo 'w' para sobrescrever o arquivo
+                    logging.StreamHandler()
+                ]
+            )
         else:
             print('Invalid arguments')
             return 1
